@@ -27,6 +27,7 @@
 
 #import "MSAL.h"
 #import "MSALBaseRequest.h"
+#import "MSALResult+Internal.h"
 
 @interface MSALInteractiveRequest : MSALBaseRequest
 {

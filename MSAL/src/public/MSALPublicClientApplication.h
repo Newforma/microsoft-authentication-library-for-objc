@@ -117,6 +117,16 @@
 + (BOOL)handleMSALResponse:(NSURL *)response;
 
 /*!
+ Ask MSAL to handle a URL response containing code and idToken.
+
+ @param   response   URL response from your application delegate's openURL handler into
+ MSAL for web authentication sessions
+ @return  YES if URL is a response to a MSAL web authentication session and handled,
+ NO otherwise.
+ */
++ (BOOL)handleCodeIdTokenMSALResponse:(NSURL *)response;
+
+/*!
     Cancels any currently running interactive web authentication session, resulting
     in the SafariViewController being dismissed and the acquireToken request ending
     in a cancelation error.
@@ -287,6 +297,32 @@
                     authority:(NSString *)authority
                 correlationId:(NSUUID *)correlationId
               completionBlock:(MSALCompletionBlock)completionBlock;
+
+#pragma mark -
+#pragma mark acquireCodeToken
+
+/*!
+ Acquire the code and token for a new user using interactive authentication
+
+ @param  scopes          Permissions you want included in the access token received
+ in the result in the completionBlock. Not all scopes are
+ gauranteed to be included in the access token returned.
+ @param  loginHint       A loginHint (usually an email) to pass to the service at the
+ beginning of the interactive authentication flow. The user returned
+ in the completion block is not guaranteed to match the loginHint.
+ @param  uiBehavior      A specific UI behavior for the interactive authentication flow
+ @param  extraQueryParameters    Key-value pairs to pass to the authentication server during
+ the interactive authentication flow.
+ @param  completionBlock The completion block that will be called when the authentication
+ flow completes, or encounters an error.
+ */
+- (void)acquireCodeTokenForScopes:(NSArray<NSString *> *)scopes
+                      redirectUri:(NSString *)redirectUri
+                            nonce:(NSString *)nonce
+                        loginHint:(NSString *)loginHint
+                       uiBehavior:(MSALUIBehavior)uiBehavior
+             extraQueryParameters:(NSDictionary <NSString *, NSString *> *)extraQueryParameters
+                  completionBlock:(MSALCompletionBlock)completionBlock;
 
 #pragma mark -
 #pragma mark acquireTokenSilent

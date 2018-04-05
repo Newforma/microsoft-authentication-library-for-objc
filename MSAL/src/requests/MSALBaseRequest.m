@@ -125,6 +125,13 @@ static MSALScopes *s_reservedScopes = nil;
     [self acquireToken:completionBlock];
 }
 
+- (void)runCodeToken:(nonnull MSALCompletionBlock)completionBlock
+{
+    [[MSALTelemetry sharedInstance] startEvent:_parameters.telemetryRequestId eventName:MSAL_TELEMETRY_EVENT_API_EVENT];
+
+    [self acquireCodeToken:completionBlock];
+}
+
 - (void)resolveEndpoints:(MSALAuthorityCompletion)completionBlock
 {
     NSString *upn = nil;
@@ -283,6 +290,7 @@ static MSALScopes *s_reservedScopes = nil;
                                   tenantId:atItem.tenantId
                                       user:atItem.user
                                    idToken:atItem.rawIdToken
+                                      code:nil
                                   uniqueId:atItem.uniqueId
                                     scopes:[tokenResponse.scope componentsSeparatedByString:@" "]];
 
@@ -291,6 +299,11 @@ static MSALScopes *s_reservedScopes = nil;
          
          completionBlock(result, nil);
      }];
+}
+
+- (void)acquireCodeToken:(MSALCompletionBlock)completionBlock
+{
+    completionBlock(nil, nil);
 }
 
 - (void)addAdditionalRequestParameters:(NSMutableDictionary<NSString *, NSString *> *)parameters

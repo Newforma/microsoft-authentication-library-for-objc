@@ -56,6 +56,11 @@
 @property (readonly) NSString *idToken;
 
 /*!
+ The code if it's returned by the service or nil if no code is returned.
+ */
+@property (readonly) NSString *code;
+
+/*!
     The unique id of the user.
  */
 @property (readonly) NSString *uniqueId;

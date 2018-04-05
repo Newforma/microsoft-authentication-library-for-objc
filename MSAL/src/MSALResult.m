@@ -39,6 +39,7 @@
                              tenantId:(NSString *)tenantId
                                  user:(MSALUser *)user
                               idToken:(NSString *)idToken
+                                 code:(NSString *)code
                              uniqueId:(NSString *)uniqueId
                                scopes:(NSArray<NSString *> *)scopes
 {
@@ -49,6 +50,7 @@
     result->_tenantId = tenantId;
     result->_user = user;
     result->_idToken = idToken;
+    result->_code = code;
     result->_uniqueId = uniqueId;
     result->_scopes = scopes;
     
@@ -62,6 +64,7 @@
                               tenantId:cacheItem.tenantId
                                   user:cacheItem.user
                                idToken:cacheItem.rawIdToken
+                                  code:nil
                               uniqueId:cacheItem.uniqueId
                                 scopes:[cacheItem.scope array]];
 }

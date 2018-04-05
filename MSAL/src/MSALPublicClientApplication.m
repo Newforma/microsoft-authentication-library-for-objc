@@ -170,6 +170,46 @@
     return [MSALWebUI handleResponse:response];
 }
 
++ (BOOL)handleCodeIdTokenMSALResponse:(NSURL *)response
+{
+    if (!response)
+    {
+        return NO;
+    }
+
+    MSALInteractiveRequest *request = [MSALInteractiveRequest currentActiveRequest];
+    if (!request)
+    {
+        return NO;
+    }
+
+//    if ([NSString msalIsStringNilOrBlank:response.query])
+//    {
+//        return [MSALWebUI handleResponse:response];
+//    }
+//
+//    NSDictionary *qps = [NSDictionary msalURLFormDecode:response.query];
+//    if (!qps)
+//    {
+//        return NO;
+//    }
+//
+//    NSString *state = qps[OAUTH2_STATE];
+//    if (!state)
+//    {
+//        return NO;
+//    }
+//
+//    if (![request.state isEqualToString:state])
+//    {
+//        LOG_ERROR(request.parameters, @"State in response \"%@\" does not match request \"%@\"", state, request.state);
+//        LOG_ERROR_PII(request.parameters, @"State in response \"%@\" does not match request \"%@\"", state, request.state);
+//        return NO;
+//    }
+
+    return [MSALWebUI handleResponse:response];
+}
+
 + (void)cancelCurrentWebAuthSession
 {
     [MSALWebUI cancelCurrentWebAuthSession];
@@ -310,6 +350,78 @@
                           apiId:MSALTelemetryApiIdAcquireWithUserBehaviorParametersAuthorityAndCorrelationId
                 completionBlock:completionBlock];
     
+}
+
+#pragma mark -
+#pragma mark Code + idToken
+- (void)acquireCodeTokenForScopes:(NSArray<NSString *> *)scopes
+                      redirectUri:(NSString *)redirectUri
+                            nonce:(NSString *)nonce
+                        loginHint:(NSString *)loginHint
+                       uiBehavior:(MSALUIBehavior)uiBehavior
+             extraQueryParameters:(NSDictionary <NSString *, NSString *> *)extraQueryParameters
+                  completionBlock:(MSALCompletionBlock)completionBlock;
+{
+    MSALRequestParameters* params = [MSALRequestParameters new];
+    params.correlationId = [NSUUID new];
+    params.component = _component;
+    params.validateAuthority = _validateAuthority;
+    params.sliceParameters = _sliceParameters;
+
+    LOG_INFO(params,
+             @"-[MSALPublicClientApplication acquireCodeTokenForScopes:%@\n"
+             "                                          redirectUri:%@\n"
+             "                                          nonce:%@\n"
+             "                                          loginHint:%@\n"
+             "                                         uiBehavior:%@\n"
+             "                               extraQueryParameters:%@\n"
+             "                                      correlationId:%@]",
+             _PII_NULLIFY(scopes), _PII_NULLIFY(redirectUri), _PII_NULLIFY(nonce), _PII_NULLIFY(loginHint), MSALStringForMSALUIBehavior(uiBehavior), extraQueryParameters, params.correlationId);
+    LOG_INFO_PII(params,
+                 @"-[MSALPublicClientApplication acquireTokenForScopes:%@\n"
+                 "                                          redirectUri:%@\n"
+                 "                                          nonce:%@\n"
+                 "                                          loginHint:%@\n"
+                 "                                         uiBehavior:%@\n"
+                 "                               extraQueryParameters:%@\n"
+                 "                                      correlationId:%@]",
+                 scopes, redirectUri, nonce, loginHint, MSALStringForMSALUIBehavior(uiBehavior), extraQueryParameters, params.correlationId);
+
+    MSALCompletionBlock block = ^(MSALResult *result, NSError *error)
+    {
+        [MSALPublicClientApplication logOperation:@"acquireCodeToken" result:result error:error context:params];
+        completionBlock(result, error);
+    };
+
+    [params setScopesFromArray:scopes];
+    params.loginHint = loginHint;
+    params.nonce = nonce;
+    params.responseType = OAUTH2_ID_TOKEN_CODE;
+    params.extraQueryParameters = extraQueryParameters;
+    NSError *error = nil;
+
+    params.unvalidatedAuthority = _authority;
+
+    params.redirectUri = [NSURL URLWithString:redirectUri];
+    params.clientId = _clientId;
+    params.urlSession = [MSALURLSession createMSALSession:params];
+
+    MSALInteractiveRequest *request =
+    [[MSALInteractiveRequest alloc] initWithParameters:params
+                                  extraScopesToConsent:nil
+                                              behavior:uiBehavior
+                                                 error:&error];
+    if (!request)
+    {
+        [params.urlSession invalidateAndCancel];
+        block(nil, error);
+        return;
+    }
+
+    [request runCodeToken:^(MSALResult *result, NSError *error) {
+        [params.urlSession invalidateAndCancel];
+        block(result, error);
+    }];
 }
 
 #pragma mark -

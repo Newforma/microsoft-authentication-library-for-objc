@@ -35,6 +35,7 @@
                              tenantId:(NSString *)tenantId
                                  user:(MSALUser *)user
                               idToken:(NSString *)idToken
+                                 code:(NSString *)code
                              uniqueId:(NSString *)uniqueId
                                scopes:(NSArray<NSString *> *)scopes;
 

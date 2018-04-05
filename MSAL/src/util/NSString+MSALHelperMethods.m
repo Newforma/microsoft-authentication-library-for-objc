@@ -322,6 +322,11 @@ static inline void Encode3bytesTo4bytes(char* output, int b0, int b1, int b2)
         set = [[NSCharacterSet characterSetWithCharactersInString:@"!#$&'()*+,/:;=?@[]%|^"] invertedSet];
     });
     NSString* encodedString = [self stringByAddingPercentEncodingWithAllowedCharacters:set];
+
+    if ([encodedString isEqualToString:OAUTH2_ID_TOKEN_CODE]) {
+        return [encodedString stringByAddingPercentEncodingWithAllowedCharacters: NSCharacterSet.URLQueryAllowedCharacterSet];
+    }
+
     return [encodedString stringByReplacingOccurrencesOfString:@" " withString:@"+"];
 }
 

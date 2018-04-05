@@ -44,6 +44,7 @@ static MSALWebUI *s_currentWebSession = nil;
 {
     NSURL *_url;
     SFSafariViewController *_safariViewController;
+    UIViewController *_webViewController;
     MSALWebUICompletionBlock _completionBlock;
     id<MSALRequestContext> _context;
     NSString *_telemetryRequestId;
@@ -138,18 +139,21 @@ static MSALWebUI *s_currentWebSession = nil;
     [_telemetryEvent setIsCancelled:NO];
     
     dispatch_async(dispatch_get_main_queue(), ^{
+
         _safariViewController = [[SFSafariViewController alloc] initWithURL:url
                                   entersReaderIfAvailable:NO];
         _safariViewController.delegate = self;
         UIViewController *viewController = [UIApplication msalCurrentViewController];
+
+
         if (!viewController)
         {
             [self clearCurrentWebSession];
             ERROR_COMPLETION(_context, MSALErrorNoViewController, @"MSAL was unable to find the current view controller.");
         }
-        
+
         [viewController presentViewController:_safariViewController animated:YES completion:nil];
-        
+
         @synchronized (self)
         {
             _completionBlock = completionBlock;
@@ -197,7 +201,7 @@ static MSALWebUI *s_currentWebSession = nil;
     }
     
     _safariViewController = nil;
-    
+
     if (!completionBlock)
     {
         LOG_ERROR(_context, @"MSAL response received but no completion block saved");

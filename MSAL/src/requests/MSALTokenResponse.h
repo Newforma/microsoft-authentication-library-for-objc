@@ -37,5 +37,6 @@
 @property (readonly) NSString *expiresIn;
 @property (readonly) NSDate *expiresOn;
 @property (readonly) NSString *idToken;
+@property (readonly) NSString *code;
 
 @end

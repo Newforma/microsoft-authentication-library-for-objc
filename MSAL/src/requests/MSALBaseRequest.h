@@ -56,7 +56,9 @@
                      error:(NSError * __nullable __autoreleasing * __nullable)error;
 
 - (void)run:(nonnull MSALCompletionBlock)completionBlock;
+- (void)runCodeToken:(nonnull MSALCompletionBlock)completionBlock;
 - (void)acquireToken:(nonnull MSALCompletionBlock)completionBlock;
+- (void)acquireCodeToken:(nonnull MSALCompletionBlock)completionBlock;
 
 - (void)addAdditionalRequestParameters:(nonnull NSMutableDictionary<NSString *, NSString *> *)parameters;
 

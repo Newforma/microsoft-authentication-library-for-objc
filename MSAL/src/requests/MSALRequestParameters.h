@@ -40,6 +40,8 @@
 @property MSALScopes *scopes;
 @property MSALTokenCache *tokenCache;
 @property NSURL *redirectUri;
+@property NSString *nonce;
+@property NSString *responseType;
 @property NSString *loginHint;
 @property NSString *clientId;
 @property NSDictionary<NSString *, NSString *> *extraQueryParameters;

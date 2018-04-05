@@ -112,6 +112,13 @@ typedef NS_ENUM(NSInteger, MSALErrorCode)
         Check to make sure your application is consented to get all of the scopes you are asking for.
      */
     MSALErrorNoAccessTokenInResponse = -42105,
+
+    /*!
+     AcquireCodeTokenErrors
+     */
+    MSALErrorNoParametersInResponse = -50001,
+    MSALErrorNoIdTokenInResponse = -50002,
+    MSALErrorNoCodeInResponse = -50003,
     
     /*!
         MSAL encounted an error when trying to store or retrieve items from
