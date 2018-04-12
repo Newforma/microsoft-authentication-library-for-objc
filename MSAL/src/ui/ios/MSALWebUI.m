@@ -25,8 +25,6 @@
 //
 //------------------------------------------------------------------------------
 
-#import <SafariServices/SafariServices.h>
-
 #import "MSALWebUI.h"
 #import "UIApplication+MSALExtensions.h"
 #import "MSALTelemetry.h"
@@ -36,14 +34,15 @@
 
 static MSALWebUI *s_currentWebSession = nil;
 
-@interface MSALWebUI () <SFSafariViewControllerDelegate>
+@interface MSALWebUI () <UIWebViewDelegate>
 
 @end
 
 @implementation MSALWebUI
 {
     NSURL *_url;
-    SFSafariViewController *_safariViewController;
+    UINavigationController *_navigationController;
+    UIWebView *_webView;
     UIViewController *_webViewController;
     MSALWebUICompletionBlock _completionBlock;
     id<MSALRequestContext> _context;
@@ -109,18 +108,6 @@ static MSALWebUI *s_currentWebSession = nil;
     [self completeSessionWithResponse:nil orError:CREATE_LOG_ERROR(_context, MSALErrorSessionCanceled, @"Authorization session was cancelled programatically")];
 }
 
-- (void)safariViewControllerDidFinish:(SFSafariViewController *)controller
-{
-    (void)controller;
-    if (![self clearCurrentWebSession])
-    {
-        return;
-    }
-    
-    [_telemetryEvent setIsCancelled:YES];
-    [self completeSessionWithResponse:nil orError:CREATE_LOG_ERROR(_context, MSALErrorUserCanceled, @"User cancelled the authorization session.")];
-}
-
 - (void)startWithURL:(NSURL *)url
      completionBlock:(MSALWebUICompletionBlock)completionBlock
 {
@@ -140,11 +127,17 @@ static MSALWebUI *s_currentWebSession = nil;
     
     dispatch_async(dispatch_get_main_queue(), ^{
 
-        _safariViewController = [[SFSafariViewController alloc] initWithURL:url
-                                  entersReaderIfAvailable:NO];
-        _safariViewController.delegate = self;
-        UIViewController *viewController = [UIApplication msalCurrentViewController];
+        _navigationController = [[UINavigationController alloc] init];
+        _webViewController = [[UIViewController alloc] init];
 
+        _webView = [[UIWebView alloc] initWithFrame:_webViewController.view.bounds];
+        [_webView setDelegate:self];
+        [_webView loadRequest:[NSURLRequest requestWithURL:url]];
+
+        [_webViewController.view addSubview:_webView];
+        [_navigationController pushViewController:_webViewController animated:NO];
+
+        UIViewController *viewController = [UIApplication msalCurrentViewController];
 
         if (!viewController)
         {
@@ -152,7 +145,11 @@ static MSALWebUI *s_currentWebSession = nil;
             ERROR_COMPLETION(_context, MSALErrorNoViewController, @"MSAL was unable to find the current view controller.");
         }
 
-        [viewController presentViewController:_safariViewController animated:YES completion:nil];
+        UIBarButtonItem *cancelButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(onTapCancel)];
+
+        [viewController presentViewController:_navigationController animated:YES completion:^{
+            _navigationController.navigationBar.topItem.leftBarButtonItem = cancelButton;
+        }];
 
         @synchronized (self)
         {
@@ -184,12 +181,12 @@ static MSALWebUI *s_currentWebSession = nil;
 {
     if ([NSThread isMainThread])
     {
-        [_safariViewController dismissViewControllerAnimated:YES completion:nil];
+        [_navigationController dismissViewControllerAnimated:YES completion:nil];
     }
     else
     {
         dispatch_async(dispatch_get_main_queue(), ^{
-            [_safariViewController dismissViewControllerAnimated:YES completion:nil];
+            [_navigationController dismissViewControllerAnimated:YES completion:nil];
         });
     }
     
@@ -199,8 +196,10 @@ static MSALWebUI *s_currentWebSession = nil;
         completionBlock = _completionBlock;
         _completionBlock = nil;
     }
-    
-    _safariViewController = nil;
+
+    _navigationController = nil;
+    _webViewController = nil;
+    _webView = nil;
 
     if (!completionBlock)
     {
@@ -212,6 +211,18 @@ static MSALWebUI *s_currentWebSession = nil;
     
     completionBlock(response, error);
     return YES;
+}
+
+- (void) webViewDidStartLoad:(UIWebView *)webView {
+    NSURL *currentUrl = [webView.request mainDocumentURL];
+
+        if ([currentUrl.absoluteString containsString:@"newforma.cloud/redirect"]) {
+            [self completeSessionWithResponse:currentUrl orError:nil];
+        }
+}
+
+-(void)onTapCancel{
+    [MSALPublicClientApplication cancelCurrentWebAuthSession];
 }
 
 @end

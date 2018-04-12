@@ -183,30 +183,6 @@
         return NO;
     }
 
-//    if ([NSString msalIsStringNilOrBlank:response.query])
-//    {
-//        return [MSALWebUI handleResponse:response];
-//    }
-//
-//    NSDictionary *qps = [NSDictionary msalURLFormDecode:response.query];
-//    if (!qps)
-//    {
-//        return NO;
-//    }
-//
-//    NSString *state = qps[OAUTH2_STATE];
-//    if (!state)
-//    {
-//        return NO;
-//    }
-//
-//    if (![request.state isEqualToString:state])
-//    {
-//        LOG_ERROR(request.parameters, @"State in response \"%@\" does not match request \"%@\"", state, request.state);
-//        LOG_ERROR_PII(request.parameters, @"State in response \"%@\" does not match request \"%@\"", state, request.state);
-//        return NO;
-//    }
-
     return [MSALWebUI handleResponse:response];
 }
 

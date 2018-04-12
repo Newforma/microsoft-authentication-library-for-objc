@@ -333,8 +333,6 @@ static MSALInteractiveRequest *s_currentRequest = nil;
              ERROR_COMPLETION(_parameters, MSALErrorNoAuthorizationResponse, @"No authorization response received from server.");
          }
 
-         // TODO: Check that we have idToken and code
-
          NSString *urlString = response.absoluteString;
          NSString *parameters = [[urlString componentsSeparatedByString:@"#"] objectAtIndex:1];
 
