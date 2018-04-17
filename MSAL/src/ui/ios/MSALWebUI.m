@@ -199,6 +199,8 @@ static MSALWebUI *s_currentWebSession = nil;
 
     _navigationController = nil;
     _webViewController = nil;
+
+    [_webView setDelegate:nil];
     _webView = nil;
 
     if (!completionBlock)
@@ -222,7 +224,6 @@ static MSALWebUI *s_currentWebSession = nil;
 }
 
 -(void)onTapCancel{
-    [_webView setDelegate:nil];
     [_webView stopLoading];
     [MSALWebUI cancelCurrentWebAuthSession];
 }
