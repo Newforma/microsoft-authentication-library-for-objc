@@ -217,12 +217,14 @@ static MSALWebUI *s_currentWebSession = nil;
     NSURL *currentUrl = [webView.request mainDocumentURL];
 
         if ([currentUrl.absoluteString containsString:@"newforma.cloud/redirect"]) {
-            [self completeSessionWithResponse:currentUrl orError:nil];
+            [MSALWebUI handleResponse:currentUrl];
         }
 }
 
 -(void)onTapCancel{
-    [MSALPublicClientApplication cancelCurrentWebAuthSession];
+    [_webView setDelegate:nil];
+    [_webView stopLoading];
+    [MSALWebUI cancelCurrentWebAuthSession];
 }
 
 @end
