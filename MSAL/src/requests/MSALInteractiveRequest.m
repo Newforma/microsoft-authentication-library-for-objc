@@ -92,7 +92,6 @@ static MSALInteractiveRequest *s_currentRequest = nil;
         parameters[OAUTH2_CLIENT_ID] = _parameters.clientId;
         parameters[OAUTH2_NONCE] = _parameters.nonce;
         parameters[OAUTH2_REDIRECT_URI] = [_parameters.redirectUri absoluteString];
-        parameters[OAUTH2_LOGIN_HINT] = _parameters.loginHint;
         parameters[OAUTH2_RESPONSE_MODE] = @"fragment";
         parameters[OAUTH2_TENANT] = @"common";
         [parameters addEntriesFromDictionary:MSALParametersForBehavior(_uiBehavior)];
@@ -112,6 +111,9 @@ static MSALInteractiveRequest *s_currentRequest = nil;
         [parameters addEntriesFromDictionary:msalId];
         [parameters addEntriesFromDictionary:MSALParametersForBehavior(_uiBehavior)];
     }
+
+    parameters[OAUTH2_LOGIN_HINT] = _parameters.loginHint;
+
     return parameters;
 }
 
