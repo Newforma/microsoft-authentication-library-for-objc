@@ -57,7 +57,7 @@ static MSALInteractiveRequest *s_currentRequest = nil;
     {
         return nil;
     }
-    
+
     if (extraScopesToConsent)
     {
         _extraScopesToConsent = [[NSOrderedSet alloc] initWithArray:extraScopesToConsent];
@@ -66,10 +66,10 @@ static MSALInteractiveRequest *s_currentRequest = nil;
             return nil;
         }
     }
-    
+
     _uiBehavior = behavior;
     _pkce = [MSALPkce new];
-    
+
     return self;
 }
 
@@ -122,7 +122,7 @@ static MSALInteractiveRequest *s_currentRequest = nil;
     NSURLComponents *urlComponents =
     [[NSURLComponents alloc] initWithURL:_authority.authorizationEndpoint
                  resolvingAgainstBaseURL:NO];
-    
+
     // Query parameters can come through from the OIDC discovery on the authorization endpoint as well
     // and we need to retain them when constructing our authorization uri
     NSMutableDictionary <NSString *, NSString *> *parameters = [self authorizationParameters];
@@ -134,12 +134,12 @@ static MSALInteractiveRequest *s_currentRequest = nil;
             [parameters addEntriesFromDictionary:authorizationQueryParams];
         }
     }
-    
+
     if (_parameters.sliceParameters)
     {
         [parameters addEntriesFromDictionary:_parameters.sliceParameters];
     }
-    
+
     MSALUser *user = _parameters.user;
     if (user)
     {
@@ -147,10 +147,10 @@ static MSALInteractiveRequest *s_currentRequest = nil;
         parameters[OAUTH2_LOGIN_REQ] = user.uid;
         parameters[OAUTH2_DOMAIN_REQ] = user.utid;
     }
-    
+
     _state = [[NSUUID UUID] UUIDString];
     parameters[OAUTH2_STATE] = _state;
-    
+
     urlComponents.percentEncodedQuery = [parameters msalURLFormEncode];
 
     return [urlComponents URL];
@@ -217,11 +217,11 @@ static MSALInteractiveRequest *s_currentRequest = nil;
         {
             MSALTelemetryAPIEvent *event = [self getTelemetryAPIEvent];
             [self stopTelemetryEvent:event error:error];
-            
+
             completionBlock(nil, error);
             return;
         }
-        
+
         _authority = authority;
         [self acquireTokenImpl:completionBlock];
     }];
@@ -247,7 +247,7 @@ static MSALInteractiveRequest *s_currentRequest = nil;
 - (void)acquireTokenImpl:(MSALCompletionBlock)completionBlock
 {
     NSURL *authorizationUrl = [self authorizationUrl];
-    
+
     LOG_INFO(_parameters, @"Launching Web UI");
     LOG_INFO_PII(_parameters, @"Launching Web UI with URL: %@", authorizationUrl);
     s_currentRequest = self;
@@ -261,29 +261,29 @@ static MSALInteractiveRequest *s_currentRequest = nil;
          {
              MSALTelemetryAPIEvent *event = [self getTelemetryAPIEvent];
              [self stopTelemetryEvent:event error:error];
-             
+
              completionBlock(nil, error);
              return;
          }
-         
+
          if ([NSString msalIsStringNilOrBlank:response.absoluteString])
          {
              // This error case *really* shouldn't occur. If we're seeing it it's almost certainly a developer bug
              ERROR_COMPLETION(_parameters, MSALErrorNoAuthorizationResponse, @"No authorization response received from server.");
          }
-         
+
          NSDictionary *params = [NSDictionary msalURLFormDecode:response.query];
          CHECK_ERROR_COMPLETION(params, _parameters, MSALErrorBadAuthorizationResponse, @"Authorization response from the server code not be decoded.");
-         
+
          CHECK_ERROR_COMPLETION([_state isEqualToString:params[OAUTH2_STATE]], _parameters, MSALErrorInvalidState, @"State returned from the server does not match");
-         
+
          _code = params[OAUTH2_CODE];
          if (_code)
          {
              [super acquireToken:completionBlock];
              return;
          }
-         
+
          NSString *authorizationError = params[OAUTH2_ERROR];
          if (authorizationError)
          {
@@ -291,20 +291,20 @@ static MSALInteractiveRequest *s_currentRequest = nil;
              NSString *subError = params[OAUTH2_SUB_ERROR];
              MSALErrorCode code = MSALErrorCodeForOAuthError(authorizationError, MSALErrorAuthorizationFailed);
              MSALLogError(_parameters, MSALErrorDomain, code, errorDescription, authorizationError, subError, __FUNCTION__, __LINE__);
-             
+
              NSError *msalError = MSALCreateError(MSALErrorDomain, code, errorDescription, authorizationError, subError, nil);
-                          
+
              MSALTelemetryAPIEvent *event = [self getTelemetryAPIEvent];
              [self stopTelemetryEvent:event error:msalError];
-             
+
              completionBlock(nil, msalError);
              return;
          }
-         
+
          ERROR_COMPLETION(_parameters, MSALErrorBadAuthorizationResponse, @"No code or error in server response.");
      }];
 
-    
+
 }
 
 - (void)acquireCodeTokenImpl:(MSALCompletionBlock)completionBlock
@@ -349,8 +349,16 @@ static MSALInteractiveRequest *s_currentRequest = nil;
              return;
          }
 
-         NSString *idTokenStringParam = [[parameters componentsSeparatedByString:@"&"] objectAtIndex:0];
-         NSString *idToken = [[idTokenStringParam componentsSeparatedByString:@"="] objectAtIndex:1];
+         NSString *idToken;
+         NSString *code;
+
+         for (NSString *param in [parameters componentsSeparatedByString:@"&"]) {
+             if ([param containsString:@"id_token"]) {
+                 idToken = [[param componentsSeparatedByString:@"="] objectAtIndex:1];
+             } else if ([param containsString:@"code"]) {
+                 code = [[param componentsSeparatedByString:@"="] objectAtIndex:1];
+             }
+         }
 
          if (!idToken || !idToken.length) {
              NSDictionary *userInfo = @{NSLocalizedDescriptionKey: @"No idToken in response"};
@@ -362,9 +370,6 @@ static MSALInteractiveRequest *s_currentRequest = nil;
              completionBlock(nil, error);
              return;
          }
-
-         NSString *codeStringParam = [[parameters componentsSeparatedByString:@"&"] objectAtIndex:1];
-         NSString *code = [[codeStringParam componentsSeparatedByString:@"="] objectAtIndex:1];
 
          if (!code || !code.length) {
              NSDictionary *userInfo = @{NSLocalizedDescriptionKey: @"No code in response"};
@@ -388,7 +393,7 @@ static MSALInteractiveRequest *s_currentRequest = nil;
     parameters[OAUTH2_GRANT_TYPE] = OAUTH2_AUTHORIZATION_CODE;
     parameters[OAUTH2_CODE] = _code;
     parameters[OAUTH2_REDIRECT_URI] = [_parameters.redirectUri absoluteString];
-    
+
     // PKCE
     parameters[OAUTH2_CODE_VERIFIER] = _pkce.codeVerifier;
 }
